@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Itembook</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-col gap-3">
+            <h1 class="text-xl font-bold text-center">📱 Digital Itembook</h1>
+            <input type="text" id="searchInput" onkeyup="searchAndFilter()" placeholder="🔍 ပစ္စည်းနာမည်ဖြင့် ရှာရန်..." class="w-full p-2.5 rounded-lg text-gray-900 focus:outline-none">
+            <select id="brandFilter" onchange="searchAndFilter()" class="w-full p-2.5 rounded-lg text-gray-900 focus:outline-none">
+                <option value="all">📁 Brand အားလုံးကြည့်ရန်</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4">
+        <div id="loading" class="text-center py-10 text-gray-500 font-medium">ဒေတာများ ဆွဲယူနေပါသည်... ခဏစောင့်ပါ...</div>
+        
+        <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </main>
+
+    <script>
+        // ၁။ ဒီနေရာမှာ အစ်ကိုကြီးရဲ့ တကယ့် Tab နာမည် 'Product_template' ကို အစားထိုးပါ
+const SHEET_NAME = 'Product_template'; 
+
+// ၂။ ဒီနေရာမှာ အစ်ကိုကြီးရဲ့ Sheet ID ကြီးကို ကွက်တိ အစားထိုးပါ
+const SPREADSHEET_ID = '11suvXCd-gNLdh7pNviIQfnk2_DsK1KT7stClnbNKHRE'; 
+
+// ၃။ ⚠️ ဒီ url လိုင်းကြီးကိုတော့ ညီလေးပေးတဲ့အတိုင်း "လုံးဝ (လုံးဝ) မပြင်ဘဲ" ဒီအတိုင်း ပြန်ထားပေးပါဗျာ
+const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+let productData = [];
+
+        // Fetch Data From Google Sheet Live
+        async function fetchProducts() {
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                // Clean up Google JSON response
+                const json = JSON.parse(text.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+                
+                // Map columns dynamically (Assuming: Col 0=Brand, Col 1=Item Name, Col 2=Retail, Col 3=Wholesale)
+                productData = rows.map(row => ({
+                    brand: row.c[0] ? row.c[0].v : 'Other',
+                    name: row.c[1] ? row.c[1].v : 'No Name',
+                    retail: row.c[2] ? row.c[2].v : '-',
+                    wholesale: row.c[3] ? row.c[3].v : '-'
+                }));
+
+                // Remove header row if it contains column titles
+                if(productData[0].name.toLowerCase().includes('name') || productData[0].brand.toLowerCase().includes('brand')) {
+                    productData.shift();
+                }
+
+                populateFilters();
+                displayProducts(productData);
+                document.getElementById('loading').classList.add('hidden');
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loading').innerText = '❌ ဒေတာဆွဲယူရာတွင် Error တက်နေပါသည်။ Sheet Sharing ကို ပြန်စစ်ပေးပါ။';
+            }
+        }
+
+        // Setup Brand Filter Dynamic options
+        function populateFilters() {
+            const brands = [...new Set(productData.map(p => p.brand))];
+            const select = document.getElementById('brandFilter');
+            brands.forEach(brand => {
+                if(brand) {
+                    const opt = document.createElement('option');
+                    opt.value = brand;
+                    opt.innerText = brand;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        // Render Cards
+        function displayProducts(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            
+            if(products.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">ရှာဖွေမှုမတွေ့ပါ။</div>';
+                return;
+            }
+
+            products.forEach(p => {
+                const card = `
+                    <div class="bg-white p-4 rounded-xl shadow-xs border border-gray-100 flex flex-col justify-between gap-2">
+                        <div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-sm">${p.brand}</span>
+                            <h2 class="text-lg font-bold text-gray-900 mt-1">${p.name}</h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-2 rounded-lg mt-2 text-sm">
+                            <div>
+                                <p class="text-gray-500 text-xs">Retail Price</p>
+                                <p class="font-bold text-red-600">${p.retail} Ks</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-xs">Wholesale Price</p>
+                                <p class="font-bold text-green-600">${p.wholesale} Ks</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        // Live Search & Filter Core logic
+        function searchAndFilter() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const brandVal = document.getElementById('brandFilter').value;
+
+            const filtered = productData.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.brand.toLowerCase().includes(searchVal);
+                const matchesBrand = (brandVal === 'all') || (p.brand === brandVal);
+                return matchesSearch && matchesBrand;
+            });
+
+            displayProducts(filtered);
+        }
+
+        // Start App
+        fetchProducts();
+    </script>
+</body>
+</html>
