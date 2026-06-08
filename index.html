@@ -41,14 +41,14 @@
 
 <script>
     // 🔑 အဆင့် (၁) က အသစ်ရလာတဲ့ Web app URL လင့်ခ်ကြီးကို ဒီနေရာမှာ အစားထိုးထည့်ပေးပါဦး အစ်ကိုကြီး
-    const API_URL = "https://script.google.com/macros/s/AKfycby8gIiVzDh4bOf5utae_KwFh5JXXn1v5uGRmFVQUu1cdkzCCDDcTSFhbk3U6Gp594oQWA/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycby6d6ajRHyVA2tfOKIzNFWc1wJ_8dy07uScdzHTdHcLQ84ud1d20RdEuKi7qs77il2Hiw/exec"; 
 
     let allProducts = [];
 
     async function loadProducts() {
         const loading = document.getElementById("loadingText");
         try {
-            const response = await fetch(API_URL, { method: "GET" });
+            const response = await fetch(API_URL);
             const data = await response.json();
             
             allProducts = data.map(item => {
@@ -60,21 +60,24 @@
                     displayPrice = isNaN(num) ? item.price : `${num.toLocaleString()} Ks`;
                 }
                 
-                // ပုံမရှိလျှင် Placeholder ပြသရန် Backup စနစ်
-                let imgSource = item.image ? item.image : "https://via.placeholder.com/150?text=No+Image";
+                // 🎯 [အဓိက လျှို့ဝှက်ချက်] - Drive ID ကို သုံးပြီး Google ရဲ့ သီးသန့် Thumbnail Server ကနေ ပုံကို ဆွဲပြခြင်း (CORS Block လုံးဝမမိပါ)
+                let finalImg = "https://via.placeholder.com/150?text=No+Image";
+                if (item.imageId) {
+                    finalImg = "https://lh3.googleusercontent.com/d/" + item.imageId;
+                }
                 
                 return {
                     name: item.name || "အမည်မရှိပစ္စည်း",
                     price: displayPrice,
                     group: item.group,
-                    image: imgSource 
+                    image: finalImg 
                 };
             });
 
             loading.style.display = "none";
             renderCatalog(allProducts); 
         } catch (error) {
-            loading.innerText = "⚠️ ဒေတာဆွဲယူမှု မအောင်မြင်ပါ။ API URL ကို စစ်ဆေးပေးပါဦးဗျာ။";
+            loading.innerText = "⚠️ ဒေတာဆွဲယူမှု မအောင်မြင်ပါ။ API URL သို့မဟုတ် လုံခြုံရေးတံခါးကို စစ်ဆေးပေးပါဦးဗျာ။";
             console.error(error);
         }
     }
@@ -107,7 +110,7 @@
                     card.className = "product-card";
                     card.innerHTML = `
                         <div class="image-container">
-                            <img src="${item.image}" alt="${item.name}">
+                            <img src="${item.image}" alt="${item.name}" loading="lazy">
                         </div>
                         <p class="product-title">${item.name}</p>
                         <span class="product-price">${item.price}</span>
