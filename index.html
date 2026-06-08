@@ -12,6 +12,7 @@
         .search-container input { flex: 1; border: none; padding: 10px 20px; font-size: 16px; outline: none; border-radius: 50px; }
         .search-container button { background-color: #007bc4; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-size: 15px; cursor: pointer; font-weight: bold; }
         
+        /* 🏷️ အစ်ကိုကြီး အလိုရှိသော ဝါရောင် အုပ်စုခေါင်းစဉ် */
         .category-heading { background-color: #FFD700; color: #111; font-size: 18px; font-weight: bold; padding: 10px 20px; border-radius: 6px; margin: 30px auto 15px auto; max-width: 1200px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto 20px auto; }
@@ -40,7 +41,7 @@
 <div id="catalogArea" class="catalog-container"></div>
 
 <script>
-    // 🔑 နေရာလဲရန် - Apps Script က ရလာတဲ့ Web app URL လင့်ခ်အသစ်ကြီးကို ဒီမှာ ထည့်ပေးပါ အစ်ကိုကြီး
+    // 🔑 Apps Script က ရလာတဲ့ Web app URL လင့်ခ်ကြီးကို ဒီမှာ သေချာပေါက် ထည့်ပေးပါဦး အစ်ကိုကြီး
     const API_URL = "https://script.google.com/macros/s/AKfycby5jZWNyNxykDR6_1rRU-M3QKn0fYDv2I4-lO6lWn37hmWq2Ff7GAG_G_izjh4Yfmz9dw/exec"; 
 
     let allProducts = [];
@@ -53,10 +54,14 @@
             
             allProducts = data.map(item => {
                 let displayPrice = "- Ks";
+                
                 if (item.price !== undefined && item.price !== null && item.price !== "") {
-                    let num = Number(item.price);
-                    displayPrice = isNaN(num) ? item.price : `${num.toLocaleString()} Ks`;
+                    // 🎯 [ဈေးနှုန်း Error ဖြေရှင်းချက်] - ကော်မာ ( , ) များကို ဖျက်ထုတ်ပြီးမှ နံပါတ်ပြောင်းလဲခြင်း
+                    let cleanPrice = item.price.toString().replace(/,/g, '').trim();
+                    let num = Number(cleanPrice);
+                    displayPrice = isNaN(num) ? item.price + " Ks" : `${num.toLocaleString()} Ks`;
                 }
+                
                 return {
                     name: item.name || "အမည်မရှိပစ္စည်း",
                     price: displayPrice,
