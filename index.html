@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Itembook - Secure Live Catalog</title>
+    <title>Itembook - Automated Live Catalog</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f6f9; margin: 0; padding: 20px; }
         .header-section { max-width: 600px; margin: 0 auto 30px auto; text-align: center; }
@@ -12,7 +12,6 @@
         .search-container input { flex: 1; border: none; padding: 10px 20px; font-size: 16px; outline: none; border-radius: 50px; }
         .search-container button { background-color: #007bc4; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-size: 15px; cursor: pointer; font-weight: bold; }
         
-        /* 🏷️ အစ်ကိုကြီး အလိုရှိသော ဝါရောင် အုပ်စုခေါင်းစဉ် */
         .category-heading { background-color: #FFD700; color: #111; font-size: 18px; font-weight: bold; padding: 10px 20px; border-radius: 6px; margin: 30px auto 15px auto; max-width: 1200px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto 20px auto; }
@@ -36,13 +35,13 @@
     </div>
 </div>
 
-<div class="status-text" id="loadingText">⏳ ကုန်ပစ္စည်းများနှင့် Drive ပုံရိပ်များကို စနစ်တကျ ချိတ်ဆက်နေပါသည်...</div>
+<div class="status-text" id="loadingText">⏳ Odoo ဒေတာများနှင့် Google Drive ပုံရိပ်များကို ချိတ်ဆက်နေပါသည်...</div>
 
 <div id="catalogArea" class="catalog-container"></div>
 
 <script>
-    // 🔑 အဆင့် (၁) က အသစ်ရလာတဲ့ Web app URL လင့်ခ်ကြီးကို ဒီနေရာမှာ ထည့်ပေးပါ အစ်ကိုကြီး
-    const API_URL = "https://script.google.com/macros/s/AKfycby0CtyLtfkFSoacW15cfhX7D9ewsnVIxqJ6z3-Lsir0Yr32876rWRvLna5nbmHG8PIU-g/exec"; 
+    // 🔑 Apps Script က ရလာတဲ့ Web app URL လင့်ခ်ကြီးကို ဒီမှာ ထည့်ပေးပါဦး အစ်ကိုကြီး
+    const API_URL = "https://script.google.com/macros/s/AKfycbwPmQibpB3dyjS2DPPLhROQY3N4eVAAArnWxwftOkk6pAroZ3OsHr2E32vodibTVBL46Q/exec"; 
 
     let allProducts = [];
 
@@ -58,17 +57,14 @@
                 if (item.price !== undefined && item.price !== null && item.price !== "") {
                     let cleanPrice = item.price.toString().replace(/,/g, '').trim();
                     let num = Number(cleanPrice);
-                    displayPrice = isNaN(num) ? item.price + " Ks" : `${num.toLocaleString()} Ks`;
+                    displayPrice = isNaN(num) ? item.price : `${num.toLocaleString()} Ks`;
                 }
-                
-                // ပုံမရှိလျှင် Placeholder ပုံသေပြသရန် Backup စနစ်
-                let imgSource = item.image ? item.image : "https://via.placeholder.com/150?text=No+Image";
                 
                 return {
                     name: item.name || "အမည်မရှိပစ္စည်း",
                     price: displayPrice,
                     group: item.group,
-                    image: imgSource 
+                    image: item.image 
                 };
             });
 
@@ -108,7 +104,7 @@
                     card.className = "product-card";
                     card.innerHTML = `
                         <div class="image-container">
-                            <img src="${item.image}" alt="${item.name}">
+                            <img src="${item.image}" alt="${item.name}" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
                         </div>
                         <p class="product-title">${item.name}</p>
                         <span class="product-price">${item.price}</span>
