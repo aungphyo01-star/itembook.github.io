@@ -12,7 +12,6 @@
         .search-container input { flex: 1; border: none; padding: 10px 20px; font-size: 16px; outline: none; border-radius: 50px; }
         .search-container button { background-color: #007bc4; color: white; border: none; padding: 10px 25px; border-radius: 50px; font-size: 15px; cursor: pointer; font-weight: bold; }
         
-        /* 🏷️ အစ်ကိုကြီး အလိုရှိသော ဝါရောင် အုပ်စုခေါင်းစဉ် */
         .category-heading { background-color: #FFD700; color: #111; font-size: 18px; font-weight: bold; padding: 10px 20px; border-radius: 6px; margin: 30px auto 15px auto; max-width: 1200px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto 20px auto; }
@@ -41,15 +40,14 @@
 <div id="catalogArea" class="catalog-container"></div>
 
 <script>
-    // 🎯 အစ်ကိုကြီး ပေးပို့လိုက်သော API URL အမှန်ကို ကွက်တိ ထည့်သွင်းပေးထားပါသည်
-    const API_URL = "https://script.google.com/macros/s/AKfycbzWTcSsfwvNjlz35Oax2zzEPjIZzf_hdtPrSaeLtvvE3tf9r8_o_1wyVdSBySB1B7cdvw/exec"; 
+    // 🔑 အဆင့် (၁) က အသစ်ရလာတဲ့ Web app URL လင့်ခ်ကြီးကို ဒီနေရာမှာ အစားထိုးထည့်ပေးပါဦး အစ်ကိုကြီး
+    const API_URL = "https://script.google.com/macros/s/AKfycby8gIiVzDh4bOf5utae_KwFh5JXXn1v5uGRmFVQUu1cdkzCCDDcTSFhbk3U6Gp594oQWA/exec"; 
 
     let allProducts = [];
 
     async function loadProducts() {
         const loading = document.getElementById("loadingText");
         try {
-            // 🌐 GitHub CORS Security ကို ကျော်ဖြတ်ရန် header အချောသတ် ထည့်သွင်းခေါ်ယူခြင်း
             const response = await fetch(API_URL, { method: "GET" });
             const data = await response.json();
             
@@ -57,24 +55,26 @@
                 let displayPrice = "- Ks";
                 
                 if (item.price !== undefined && item.price !== null && item.price !== "") {
-                    // CSV ထဲက ကော်မာ ( , ) ပါသော ဈေးနှုန်းများကို နံပါတ်အဖြစ် ပြောင်းလဲနိုင်အောင် ရှင်းထုတ်ခြင်း
                     let cleanPrice = item.price.toString().replace(/,/g, '').trim();
                     let num = Number(cleanPrice);
                     displayPrice = isNaN(num) ? item.price : `${num.toLocaleString()} Ks`;
                 }
                 
+                // ပုံမရှိလျှင် Placeholder ပြသရန် Backup စနစ်
+                let imgSource = item.image ? item.image : "https://via.placeholder.com/150?text=No+Image";
+                
                 return {
                     name: item.name || "အမည်မရှိပစ္စည်း",
                     price: displayPrice,
                     group: item.group,
-                    image: item.image 
+                    image: imgSource 
                 };
             });
 
             loading.style.display = "none";
             renderCatalog(allProducts); 
         } catch (error) {
-            loading.innerText = "⚠️ ဒေတာဆွဲယူမှု မအောင်မြင်ပါ။ API URL သို့မဟုတ် လုံခြုံရေးတံခါးကို စစ်ဆေးပေးပါဦးဗျာ။";
+            loading.innerText = "⚠️ ဒေတာဆွဲယူမှု မအောင်မြင်ပါ။ API URL ကို စစ်ဆေးပေးပါဦးဗျာ။";
             console.error(error);
         }
     }
@@ -107,7 +107,7 @@
                     card.className = "product-card";
                     card.innerHTML = `
                         <div class="image-container">
-                            <img src="${item.image}" alt="${item.name}" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
+                            <img src="${item.image}" alt="${item.name}">
                         </div>
                         <p class="product-title">${item.name}</p>
                         <span class="product-price">${item.price}</span>
